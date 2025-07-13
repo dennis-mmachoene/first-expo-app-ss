@@ -1,6 +1,6 @@
 import Button from "@/components/Button";
 import ImageViewer from "@/components/ImageViewer";
-import { ImageSourcePropType, StyleSheet, View } from "react-native";
+import { ImageSourcePropType, Platform, StyleSheet, View } from "react-native";
 import * as ImagePicker from 'expo-image-picker';
 import { useRef, useState } from "react";
 import IconButton from "@/components/IconButton";
@@ -11,6 +11,7 @@ import EmojiSticker from "@/components/EmojiSticker";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import * as MediaLibrary from 'expo-media-library'
 import { captureRef } from "react-native-view-shot";
+import domtoimage from 'dom-to-image';
 
 const styles = StyleSheet.create({
   container: {
@@ -75,22 +76,37 @@ export default function Index() {
   }
 
   const onSaveImageAsync = async () => {
-try{
-  const localUrl = await captureRef(imageRef, {
-    height: 440,
-    quality: 1,
-  });
-  
-  await MediaLibrary.saveToLibraryAsync(localUrl);
-  if(localUrl){
-    alert('Saved');
+    if (Platform.OS !== 'web') {
+      try {
+        const localUrl = await captureRef(imageRef, {
+          height: 440,
+          quality: 1,
+        });
 
-  }
-}catch(e){
-  console.log(e);
-}
-  }
+        await MediaLibrary.saveToLibraryAsync(localUrl);
+        if (localUrl) {
+          alert('Saved');
 
+        }
+      } catch (e) {
+        console.log(e);
+      }
+    }else{
+      try{
+        const dataUrl = await domtoimage.toJpeg(imageRef.current, {
+          quality: 0.95,
+          width: 320,
+          height: 440.
+        });
+        let link = document.createElement('a');
+        link.download = 'sticker-smash.jpeg';
+        link.href = dataUrl;
+        link.click();
+      }catch(e){
+        console.log(e);
+      }
+    }
+  }
   if (status === null) {
     requestPermission();
   }
